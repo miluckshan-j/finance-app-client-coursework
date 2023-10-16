@@ -17,12 +17,31 @@ namespace FinanceApp
             InitializeComponent();
         }
 
-        private void forecast(object sender, EventArgs e)
+        private async void forecast(object sender, EventArgs e)
         {
-            // TODO: Aggregate past records or use service to predict
-            Random random = new Random();
-            lblExpectedIncome.Text = Math.Round(random.NextDouble() * 100, 2) + " $";
-            lblExpectedExpense.Text = Math.Round(random.NextDouble() * 100, 2)  + " $";
+            prediction.service.PredictionServiceSoapClient client = new prediction.service.PredictionServiceSoapClient();
+            client.Endpoint.Address = new System.ServiceModel.EndpointAddress("https://localhost:44337/service/Prediction");
+
+            var start = DateTime.Now.ToString("yyyy-MM-dd");
+            var end = dtForecast.Value.ToString("yyyy-MM-dd");
+            var response = await client.RetrievePredictionsAsync(start, end);
+
+            foreach (DataRow row in response.Rows)
+            {
+                double value = Math.Round(double.Parse(row["amount"].ToString()) / double.Parse(row["count"].ToString()), 2);
+
+                if (row["type"].ToString() == "income")
+                {
+                    lblExpectedIncome.Text = value + " $";
+                }
+
+                if (row["type"].ToString() == "expense")
+                {
+                    lblExpectedExpense.Text = value + " $";
+                }
+
+            }
+
         }
     }
 }
